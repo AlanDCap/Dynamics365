@@ -4,38 +4,11 @@
  * em diferentes pontos da lógica implementada. O executionContext é o contexto passado como primeiro 
  * parâmetro para as funções configuradas nos eventos de formulários, seja onLoad, onSave, ou onChange.
  */
-const _contextoDoFormulario = null;
+const _contextoAccount = null;
 
 /**Carrega o contexto do formulário em uma constante global*/
 function carregarContextoDoFormulario() {
     _contextoDoFormulario = !_contextoDoFormulario ? executionContext.getFormContext() : _contextoDoFormulario;
-}
-//#endregion
-
-//#region :: Carregar Permissões ::
-/**
- * O objetivo é armazenar em uma propriedade do script as permissões do usuário,
- * facilitando o acesso quando necessário. A função poderia ser chamada no carregamento 
- * do formulário, ou apenas nos momentos em que se faz necessário validar os perfis de acesso
- * de um usuário
- */
-
-//Constante que armazena as permissões do usuário
-const _perfisDoUsuario = [];
-
-//chamada da função
-carregarPerfisDeSeguranca();
-
-//faz a validação
-if (_perfisDoUsuario.includes("Acesso basico")) {
-    //executa a lógica 
-}
-
-function carregarPerfisDeSeguranca() {
-    Xrm.Utility.getGlobalContext().userSettings.roles
-        ?.forEach(role => {
-            _perfisDoUsuario.push(role.name);
-        });
 }
 //#endregion
 
@@ -44,7 +17,7 @@ function carregarPerfisDeSeguranca() {
  * Bloqueia todos os controles do formulário
  */
 function bloquearFormulario() {
-    formContext.ui.controls.forEach(function (control, i) {
+    formContext.ui.controls.forEach(control => {
         if (control && control.getDisabled && !control.getDisabled()) {
             control.setDisabled(true);
         }
@@ -52,38 +25,7 @@ function bloquearFormulario() {
 }
 //#endregion
 
-//#region :: Bloquear ou Desbloquear uma lista de campos do formulário
-/**
- * Lista de campos para bloquear ou desbloquear
- * @param {any} arrayCampos 
- * Parâmetro que define se bloqueia ou desbloqueia
- * true => bloqueia || false => desbloqueia
- * @param {any} bool
- */
-function bloqueiaDesbloqueiaCampos(arrayCampos = [], bool) {
-    arrayCampos.forEach(campo => {
-        if (_contextoDoFormulario.getControl(campo).getDisabled())
-            _contextoDoFormulario.getControl(campo).setDisabled(bool);
-    })
-}
-//#endregion
 
-//#region :: Exibir ou Ocultar uma lista de campos do formulário
-/**
- * Lista de campos para Exibir ou Ocultar
- * @param {any} arrayCampos
- * Parâmetro que define se exibe ou oculta
- * true => exibe || false => oculta
- * @param {any} bool
- */
-function exibeOcultaCampos(arrayCampos, bool) {
-    arrayCampos.forEach(campo => {
-        _contextoDoFormulario
-            .getControl(campo)
-            .setVisible(bool);
-    })
-}
-//#endregion
 
 //#region :: Requisições XHR (INCOMPLETO)::
 /**
@@ -122,4 +64,33 @@ const accountId = "038cfec1-5f66-4611-9e1f-9532f12362c5"
 var req = new XMLHttpRequest();
 req.open(metodo, url + "(" + accountId + ")", false)
 adicionarHeadersOData(req);
+
+//Função alternativa que trata a requisição como um todo. 
+function requestXhr(path, method = "GET") {
+    const req = new XMLHttpRequest();
+    let response = null;
+    const clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
+    const endpointVersion = "/api/data/v9.2/";
+
+    req.open(method, clientUrl + endpointVersion + path, false);
+
+    req.setRequestHeader("OData-MaxVersion", "4.0");
+    req.setRequestHeader("OData-Version", "4.0");
+    req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    req.setRequestHeader("Accept", "application/json");
+    req.setRequestHeader("Prefer", "odata.include-annotations=*");
+    req.onreadystatechange = function () {
+        if (this.readyState === 4) {
+            req.onreadystatechange = null;
+            if (this.status === 200) {
+                response = JSON.parse(this.response);
+            } else {
+                console.log(this.responseText);
+            }
+        }
+    };
+    req.send();
+
+    return response;
+}
 //#endregion
