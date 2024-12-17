@@ -7,8 +7,8 @@
 const _contextoAccount = null;
 
 /**Carrega o contexto do formulário em uma constante global*/
-function carregarContextoDoFormulario() {
-    _contextoDoFormulario = !_contextoDoFormulario ? executionContext.getFormContext() : _contextoDoFormulario;
+function carregarContextoDoFormulario(executionContext) {
+    _contextoAccount = !_contextoAccount ? executionContext.getFormContext() : _contextoAccount;
 }
 //#endregion
 
@@ -16,8 +16,11 @@ function carregarContextoDoFormulario() {
 /**
  * Bloqueia todos os controles do formulário
  */
-function bloquearFormulario() {
-    formContext.ui.controls.forEach(control => {
+function bloquearFormulario(_contextoAccount) {
+
+    if (!_contextoAccount) return;
+
+    _contextoAccount.ui.controls.forEach(control => {
         if (control && control.getDisabled && !control.getDisabled()) {
             control.setDisabled(true);
         }
